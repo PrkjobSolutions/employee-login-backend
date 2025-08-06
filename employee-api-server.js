@@ -150,17 +150,6 @@ app.put('/admin/password', (req, res) => {
 });
 
 
-// ✅ Serve frontend files or fallback to login.html
-app.get("*", (req, res) => {
-  const requestedPath = path.join(__dirname, "public", req.path);
-  res.sendFile(requestedPath, (err) => {
-    if (err) {
-      res.sendFile(path.join(__dirname, "public", "login.html"));
-    }
-  });
-});
-
-
 
 // ✅ Start the server!
 app.listen(port, () => {
@@ -177,3 +166,4 @@ app.get("/api/employee/:emp_id", (req, res) => {
     res.json(employee);
   });
 });
+
