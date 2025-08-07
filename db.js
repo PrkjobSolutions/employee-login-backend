@@ -1,5 +1,15 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('employees.db');
+const path = require('path');
+
+// ✅ This ensures the DB is always loaded from the same directory as db.js
+const dbPath = path.join(__dirname, 'employees.db');
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('❌ Could not connect to employees.db:', err.message);
+  } else {
+    console.log('✅ Connected to employees.db');
+  }
+});
 
 db.serialize(() => {
   db.run(`
@@ -24,3 +34,5 @@ db.serialize(() => {
 });
 
 module.exports = db;
+
+
