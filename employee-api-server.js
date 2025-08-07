@@ -14,13 +14,16 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-// ✅ Get all employees
-app.get('/employees', (req, res) => { 
-  db.all("SELECT * FROM employees", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+// ✅ Get all employees (PostgreSQL)
+app.get('/employees', async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM employees");
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
+
 
 // ✅ Add a new employee
 app.post('/employees', (req, res) => {
@@ -166,4 +169,5 @@ app.get("/api/employee/:emp_id", (req, res) => {
     res.json(employee);
   });
 });
+
 
