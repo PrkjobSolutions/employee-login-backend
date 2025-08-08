@@ -1,11 +1,10 @@
-// db.js (PostgreSQL version)
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
+  connectionString: "postgresql://postgres:xgLtrOqtYxWNQObsFCuybmVmkmhrqYeh@trolley.proxy.rlwy.net:35139/railway",
   ssl: {
-    rejectUnauthorized: false,
-  },
+    rejectUnauthorized: false
+  }
 });
 
 module.exports = {
