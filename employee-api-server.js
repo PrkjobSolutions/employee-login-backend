@@ -259,7 +259,7 @@ app.post('/api/upload-profile-image/:employee_id', upload.single('profileimage')
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
-  const imageUrl = `/uploads/${req.file.filename}`;
+  const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
   
   try {
     await db.query(
@@ -277,3 +277,4 @@ app.post('/api/upload-profile-image/:employee_id', upload.single('profileimage')
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
