@@ -7,7 +7,6 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const multer = require('multer');
-const path = require('path');
 
 // Serve public folder
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
@@ -277,4 +276,5 @@ app.post('/api/upload-profile-image/:employee_id', upload.single('profileimage')
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
