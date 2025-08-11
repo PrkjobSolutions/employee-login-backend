@@ -7,7 +7,6 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const multer = require('multer');
-const path = require('path');
 
 // Serve public folder
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
@@ -49,31 +48,7 @@ async function runQuery(q, params = []) {
    ------------------------- */
 
 // GET all employees
-app.get('/employees', async (req, res) => {
-  try {
-    const rows = await runQuery('SELECT * FROM employees ORDER BY id');
-    res.json(rows);
-  } catch (err) {
-    console.error('GET /employees error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// GET single employee by numeric id (primary key)
-app.get('/employees/:id', async (req, res) => {
-  const id = req.params.id;
-  try {
-    const rows = await runQuery('SELECT * FROM employees WHERE id = $1', [id]);
-    if (!rows.length) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
-  } catch (err) {
-    console.error('GET /employees/:id error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Create new employee (admin panel uses POST /employees)
-app.post('/employees', async (req, res) => {
+app.post('/employees', upload.single('profileimage'), async (req, res) => {
   try {
     const {
       name,
@@ -84,9 +59,13 @@ app.post('/employees', async (req, res) => {
       payroll_name,
       team,
       grade,
-      profileImage,
       password
     } = req.body;
+
+    let profileImage = null;
+    if (req.file) {
+      profileImage = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    }
 
     const q = `
       INSERT INTO employees
@@ -94,6 +73,7 @@ app.post('/employees', async (req, res) => {
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       RETURNING *;
     `;
+
     const vals = [
       employee_id || null,
       name || null,
@@ -103,7 +83,7 @@ app.post('/employees', async (req, res) => {
       payroll_name || null,
       team || null,
       grade || null,
-      profileImage || null,
+      profileImage,
       password || null
     ];
 
@@ -116,7 +96,7 @@ app.post('/employees', async (req, res) => {
 });
 
 // Update employee by numeric id
-app.put('/employees/:id', async (req, res) => {
+app.put('/employees/:id', upload.single('profileimage'), async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -128,9 +108,17 @@ app.put('/employees/:id', async (req, res) => {
       payroll_name,
       team,
       grade,
-      profileImage,
       password
     } = req.body;
+
+    let profileImage = null;
+    if (req.file) {
+      profileImage = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    }
+
+    // get existing profileimage to keep if no new file
+    const existing = await db.query('SELECT profileimage FROM employees WHERE id = $1', [id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Not found' });
 
     const q = `
       UPDATE employees SET
@@ -157,13 +145,12 @@ app.put('/employees/:id', async (req, res) => {
       payroll_name || null,
       team || null,
       grade || null,
-      profileImage || null,
+      profileImage || existing.rows[0].profileimage,
       password || null,
       id
     ];
 
     const { rows } = await db.query(q, vals);
-    if (!rows.length) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
   } catch (err) {
     console.error('PUT /employees/:id error:', err);
