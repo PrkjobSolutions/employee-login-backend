@@ -48,7 +48,31 @@ async function runQuery(q, params = []) {
    ------------------------- */
 
 // GET all employees
-app.post('/employees', upload.single('profileimage'), async (req, res) => {
+app.get('/employees', async (req, res) => {
+  try {
+    const rows = await runQuery('SELECT * FROM employees ORDER BY id');
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /employees error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET single employee by numeric id (primary key)
+app.get('/employees/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const rows = await runQuery('SELECT * FROM employees WHERE id = $1', [id]);
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('GET /employees/:id error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create new employee (admin panel uses POST /employees)
+app.post('/employees', async (req, res) => {
   try {
     const {
       name,
@@ -59,13 +83,9 @@ app.post('/employees', upload.single('profileimage'), async (req, res) => {
       payroll_name,
       team,
       grade,
+      profileImage,
       password
     } = req.body;
-
-    let profileImage = null;
-    if (req.file) {
-      profileImage = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    }
 
     const q = `
       INSERT INTO employees
@@ -73,7 +93,6 @@ app.post('/employees', upload.single('profileimage'), async (req, res) => {
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       RETURNING *;
     `;
-
     const vals = [
       employee_id || null,
       name || null,
@@ -83,7 +102,7 @@ app.post('/employees', upload.single('profileimage'), async (req, res) => {
       payroll_name || null,
       team || null,
       grade || null,
-      profileImage,
+      profileImage || null,
       password || null
     ];
 
@@ -96,7 +115,7 @@ app.post('/employees', upload.single('profileimage'), async (req, res) => {
 });
 
 // Update employee by numeric id
-app.put('/employees/:id', upload.single('profileimage'), async (req, res) => {
+app.put('/employees/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -108,17 +127,9 @@ app.put('/employees/:id', upload.single('profileimage'), async (req, res) => {
       payroll_name,
       team,
       grade,
+      profileImage,
       password
     } = req.body;
-
-    let profileImage = null;
-    if (req.file) {
-      profileImage = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    }
-
-    // get existing profileimage to keep if no new file
-    const existing = await db.query('SELECT profileimage FROM employees WHERE id = $1', [id]);
-    if (!existing.rows.length) return res.status(404).json({ error: 'Not found' });
 
     const q = `
       UPDATE employees SET
@@ -145,12 +156,13 @@ app.put('/employees/:id', upload.single('profileimage'), async (req, res) => {
       payroll_name || null,
       team || null,
       grade || null,
-      profileImage || existing.rows[0].profileimage,
+      profileImage || null,
       password || null,
       id
     ];
 
     const { rows } = await db.query(q, vals);
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
   } catch (err) {
     console.error('PUT /employees/:id error:', err);
@@ -191,116 +203,33 @@ app.post('/login', async (req, res) => {
 });
 
 // Admin login
-app.post('/employees', upload.single('profileimage'), async (req, res) => {
+app.post('/admin-login', async (req, res) => {
+  const { username, password } = req.body;
   try {
-    const {
-      name,
-      employee_id,
-      designation,
-      dob,
-      joining_date,
-      payroll_name,
-      team,
-      grade,
-      password
-    } = req.body;
-
-    let profileImage = null;
-    if (req.file) {
-      profileImage = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    }
-
-    const q = `
-      INSERT INTO employees
-      (employee_id, name, designation, dob, joining_date, payroll_name, team, grade, profileimage, password)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-      RETURNING *;
-    `;
-
-    const vals = [
-      employee_id || null,
-      name || null,
-      designation || null,
-      dob || null,
-      joining_date || null,
-      payroll_name || null,
-      team || null,
-      grade || null,
-      profileImage,
-      password || null
-    ];
-
-    const { rows } = await db.query(q, vals);
-    res.status(201).json(rows[0]);
+    const { rows } = await db.query('SELECT * FROM admin WHERE username = $1 AND password = $2 LIMIT 1', [username, password]);
+    if (!rows.length) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    res.json({ success: true, message: 'Admin login successful' });
   } catch (err) {
-    console.error('POST /employees error:', err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    console.error('Admin Login error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Update admin password (hardcoded username as before)
-app.put('/employees/:id', upload.single('profileimage'), async (req, res) => {
+app.put('/admin/password', async (req, res) => {
   try {
-    const { id } = req.params;
-    const {
-      name,
-      employee_id,
-      designation,
-      dob,
-      joining_date,
-      payroll_name,
-      team,
-      grade,
-      password
-    } = req.body;
+    const { newPassword } = req.body;
+    const username = 'aayushi'; // keep same as your app expects
 
-    let profileImage = null;
-    if (req.file) {
-      profileImage = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    }
+    const { rowCount } = await db.query('UPDATE admin SET password = $1 WHERE username = $2', [newPassword, username]);
+    if (rowCount === 0) return res.status(404).json({ success: false, error: 'Admin user not found' });
 
-    // First, get existing employee to keep current profileImage if no new image uploaded
-    const existing = await db.query('SELECT profileimage FROM employees WHERE id = $1', [id]);
-    if (!existing.rows.length) return res.status(404).json({ error: 'Not found' });
-
-    const q = `
-      UPDATE employees SET
-        employee_id = $1,
-        name = $2,
-        designation = $3,
-        dob = $4,
-        joining_date = $5,
-        payroll_name = $6,
-        team = $7,
-        grade = $8,
-        profileimage = $9,
-        password = $10
-      WHERE id = $11
-      RETURNING *;
-    `;
-
-    const vals = [
-      employee_id || null,
-      name || null,
-      designation || null,
-      dob || null,
-      joining_date || null,
-      payroll_name || null,
-      team || null,
-      grade || null,
-      profileImage || existing.rows[0].profileimage, // keep old image if none uploaded
-      password || null,
-      id
-    ];
-
-    const { rows } = await db.query(q, vals);
-    res.json(rows[0]);
+    res.json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
-    console.error('PUT /employees/:id error:', err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    console.error('Password update error:', err);
+    res.status(500).json({ success: false, error: 'Password update failed' });
   }
 });
-
 
 /* -------------------------
    Extra API
