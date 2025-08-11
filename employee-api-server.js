@@ -6,6 +6,25 @@ const db = require('./db'); // pg wrapper that you already have
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
+const multer = require('multer');
+const path = require('path');
+
+// Serve public folder
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// Multer storage setup
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // unique filename
+  }
+});
+const upload = multer({ storage });
+
+
+
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -233,7 +252,28 @@ app.get('/api/employee/:emp_id', async (req, res) => {
 /* Health check */
 app.get('/', (req, res) => res.send('OK'));
 
-/* Start */
+// Upload endpoint
+app.post('/api/upload-profile-image/:employee_id', upload.single('profileimage'), async (req, res) => {
+  const { employee_id } = req.params;
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const imageUrl = `/uploads/${req.file.filename}`;
+  
+  try {
+    await db.query(
+      'UPDATE employees SET profileimage = $1 WHERE employee_id = $2',
+      [imageUrl, employee_id]
+    );
+    res.json({ success: true, imageUrl });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/* Start server */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
