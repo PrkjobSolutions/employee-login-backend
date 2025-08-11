@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(bodyParser.json({ limit: '10mb' })); // increase limit as needed
+app.use(bodyParser.json());
 
 // Serve static public folder (same as before)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -237,4 +237,3 @@ app.get('/', (req, res) => res.send('OK'));
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
