@@ -1,0 +1,19 @@
+{
+  "name": "employee-login-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "employee-api-server.js",
+  "scripts": {
+    "start": "node employee-api-server.js",
+    "postinstall": "npm install pg"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "sqlite3": "^5.1.7"
+  }
+}
