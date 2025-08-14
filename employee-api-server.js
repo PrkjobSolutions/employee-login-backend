@@ -6,8 +6,8 @@ const db = require('./db'); // pg wrapper that you already have
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-app.use(cors());
+const cors = require('cors');
+app.use(cors({ origin: '*' }));
 app.use(bodyParser.json());
 
 // Serve static public folder (same as before)
@@ -237,13 +237,13 @@ app.get('/', (req, res) => res.send('OK'));
 
 // Save a new leave event
 app.post('/leave-events', async (req, res) => {
-  const { employee_id, start, leave_type, color } = req.body;
+  const { employee_id, date, leave_type, color } = req.body;  // change 'start' → 'date'
   try {
     const result = await db.query(
       `INSERT INTO leave_events (employee_id, date, leave_type, color)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [employee_id, start, leave_type, color]
+      [employee_id, date, leave_type, color]  // also change 'start' → 'date'
     );
     res.json({ id: result.rows[0].id });
   } catch (err) {
@@ -251,6 +251,7 @@ app.post('/leave-events', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 // Get all leave events for a specific employee
 app.get('/leave-events/:employee_id', async (req, res) => {
@@ -274,4 +275,5 @@ app.get('/leave-events/:employee_id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
