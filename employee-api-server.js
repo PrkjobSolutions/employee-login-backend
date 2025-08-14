@@ -2,16 +2,15 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const db = require('./db'); // pg wrapper that you already have
+const db = require('./db');
 const path = require('path');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-const cors = require('cors');
+
 app.use(cors({ origin: '*' }));
 app.use(bodyParser.json());
 
-// Serve static public folder (same as before)
-app.use(express.static(path.join(__dirname, 'public')));
 
 /**
  * Helper: run query and return rows
@@ -275,5 +274,6 @@ app.get('/leave-events/:employee_id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
