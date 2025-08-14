@@ -1,8 +1,8 @@
-// migrate.js
 const db = require('./db');
 
 async function migrate() {
   try {
+    // Employees table
     await db.query(`
       CREATE TABLE IF NOT EXISTS employees (
         id SERIAL PRIMARY KEY,
@@ -20,6 +20,7 @@ async function migrate() {
       );
     `);
 
+    // Admin table
     await db.query(`
       CREATE TABLE IF NOT EXISTS admin (
         id SERIAL PRIMARY KEY,
@@ -29,8 +30,21 @@ async function migrate() {
       );
     `);
 
+    // Leave Events table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS leave_events (
+        id SERIAL PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        date DATE NOT NULL,
+        leave_type TEXT NOT NULL,
+        color TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
     console.log('✅ Migration complete');
     process.exit(0);
+
   } catch (err) {
     console.error('Migration error:', err);
     process.exit(1);
