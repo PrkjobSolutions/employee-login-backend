@@ -233,7 +233,45 @@ app.get('/api/employee/:emp_id', async (req, res) => {
 /* Health check */
 app.get('/', (req, res) => res.send('OK'));
 
-/* Start */
+/* Leave Events Routes */
+
+// Save a new leave event
+app.post('/leave-events', async (req, res) => {
+  const { employee_id, start, leave_type, color } = req.body;
+  try {
+    const result = await db.query(
+      `INSERT INTO leave_events (employee_id, date, leave_type, color)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [employee_id, start, leave_type, color]
+    );
+    res.json({ id: result.rows[0].id });
+  } catch (err) {
+    console.error('POST /leave-events error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Get all leave events for a specific employee
+app.get('/leave-events/:employee_id', async (req, res) => {
+  const { employee_id } = req.params;
+  try {
+    const rows = await db.query(
+      `SELECT id, employee_id, date AS start, leave_type AS title, color 
+       FROM leave_events 
+       WHERE employee_id = $1
+       ORDER BY date`,
+      [employee_id]
+    );
+    res.json(rows.rows); // rows.rows because pg returns { rows: [...] }
+  } catch (err) {
+    console.error('GET /leave-events/:employee_id error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/* Start server */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
