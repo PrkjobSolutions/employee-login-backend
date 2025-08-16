@@ -270,6 +270,54 @@ app.get('/leave-events/:employee_id', async (req, res) => {
   }
 });
 
+/* -------------------------
+   Events endpoints
+   ------------------------- */
+
+// Get all events
+app.get('/events', async (req, res) => {
+  try {
+    const rows = await runQuery('SELECT * FROM events ORDER BY date');
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /events error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a new event
+app.post('/events', async (req, res) => {
+  try {
+    const { title, date, description, event_type } = req.body;
+
+    const q = `
+      INSERT INTO events (title, date, description, event_type)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
+    `;
+    const vals = [title, date, description || "", event_type];
+    const { rows } = await db.query(q, vals);
+
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('POST /events error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
+});
+
+// Delete event by id
+app.delete('/events/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM events WHERE id = $1', [id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /events/:id error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 /* Start server */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
