@@ -5,7 +5,7 @@
   "main": "employee-api-server.js",
   "scripts": {
     "start": "node employee-api-server.js",
-    "postinstall": "npm install pg"
+    "postinstall": "npm install pg multer multer-storage-cloudinary cloudinary"
   },
   "author": "",
   "license": "ISC",
