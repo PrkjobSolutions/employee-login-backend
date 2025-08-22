@@ -5,11 +5,48 @@ const bodyParser = require('body-parser');
 const db = require('./db');
 const path = require('path');
 
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({ origin: '*' }));
 app.use(bodyParser.json());
+
+
+/* -------------------------
+   Cloudinary File Upload
+   ------------------------- */
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'employee_documents', // Cloudinary folder
+    allowed_formats: ['jpg', 'png', 'pdf', 'doc', 'docx']
+  }
+});
+
+const upload = multer({ storage });
+
+// Upload route
+app.post('/api/documents/upload', upload.single('file'), (req, res) => {
+  try {
+    res.json({
+      success: true,
+      fileUrl: req.file.path // Cloudinary URL
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 
 /**
@@ -318,10 +355,13 @@ app.delete('/events/:id', async (req, res) => {
 });
 
 
+
+
 /* Start server */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
