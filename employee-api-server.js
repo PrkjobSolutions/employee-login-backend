@@ -6,7 +6,7 @@ const db = require('./db');
 const path = require('path');
 
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
+const cloudinary = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 
@@ -23,16 +23,19 @@ app.use(bodyParser.json());
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
 });
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'employee_documents', // Cloudinary folder
-    allowed_formats: ['jpg', 'png', 'pdf', 'doc', 'docx']
+    folder: 'employee_documents',
+    allowed_formats: ['jpg', 'png', 'pdf', 'doc', 'docx'],
+    resource_type: 'auto'   // 👈 important for mixed file types
   }
 });
+
 
 const upload = multer({ storage });
 
@@ -361,6 +364,7 @@ app.delete('/events/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
