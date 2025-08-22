@@ -4,8 +4,7 @@
   "description": "",
   "main": "employee-api-server.js",
   "scripts": {
-    "start": "node employee-api-server.js",
-    "postinstall": "npm install pg"
+    "start": "node employee-api-server.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,6 +13,9 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "pg": "^8.16.3",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "multer": "^1.4.5",
+    "multer-storage-cloudinary": "^4.0.0",
+    "cloudinary": "^1.41.3"
   }
 }
