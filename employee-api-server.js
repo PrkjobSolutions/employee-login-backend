@@ -13,7 +13,39 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: '*' }));
+// CORS (allow your deployed frontend + local dev)
+const FRONTENDS = [
+  'https://employee-login-frontend.onrender.com',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500'
+];
+
+const corsOptions = {
+  origin: function (origin, cb) {
+    // allow non-browser clients (curl/postman) or same-origin (no origin)
+    if (!origin) return cb(null, true);
+    if (FRONTENDS.includes(origin)) return cb(null, true);
+    return cb(null, false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
+  maxAge: 86400 // cache preflight for 24h
+};
+
+app.use(cors(corsOptions));
+// handle preflight for all routes
+app.options('*', cors(corsOptions));
+
+// Simple log to confirm requests arrive (helps debug button clicks)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/documents')) {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  }
+  next();
+});
+
+
 app.use(bodyParser.json());
 
 
@@ -418,6 +450,7 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
