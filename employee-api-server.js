@@ -357,6 +357,60 @@ app.delete('/events/:id', async (req, res) => {
   }
 });
 
+/* -------------------------
+   Documents endpoints
+   ------------------------- */
+
+// Save/Update both document URLs for an employee (matches your Admin UI)
+app.post('/api/documents/:empId', async (req, res) => {
+  const { empId } = req.params;
+  const { offerLetter, salarySlip } = req.body; // from your Admin saveDocuments()
+
+  try {
+    const q = `
+      INSERT INTO employee_documents (employee_id, offer_letter_url, salary_slip_url)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (employee_id)
+      DO UPDATE SET
+        offer_letter_url = COALESCE(EXCLUDED.offer_letter_url, employee_documents.offer_letter_url),
+        salary_slip_url  = COALESCE(EXCLUDED.salary_slip_url,  employee_documents.salary_slip_url),
+        updated_at = NOW()
+      RETURNING *;
+    `;
+    const vals = [empId, offerLetter || null, salarySlip || null];
+    const { rows } = await db.query(q, vals);
+    res.status(201).json({ success: true, data: rows[0] });
+  } catch (err) {
+    console.error('POST /api/documents/:empId error:', err);
+    res.status(500).json({ success: false, error: 'Server error', details: err.message });
+  }
+});
+
+// Get documents for an employee (matches your Employee UI: doc_type + file_path)
+app.get('/api/documents/:empId', async (req, res) => {
+  const { empId } = req.params;
+  try {
+    const { rows } = await db.query(
+      `SELECT offer_letter_url, salary_slip_url
+       FROM employee_documents
+       WHERE employee_id = $1
+       LIMIT 1;`,
+      [empId]
+    );
+
+    if (!rows.length) return res.json([]); // no docs yet
+
+    const row = rows[0];
+    const out = [];
+    if (row.offer_letter_url) out.push({ doc_type: 'offerLetter', file_path: row.offer_letter_url });
+    if (row.salary_slip_url) out.push({ doc_type: 'salarySlip',  file_path: row.salary_slip_url  });
+
+    res.json(out);
+  } catch (err) {
+    console.error('GET /api/documents/:empId error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 
@@ -364,6 +418,7 @@ app.delete('/events/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
