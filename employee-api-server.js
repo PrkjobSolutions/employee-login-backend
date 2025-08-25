@@ -1,4 +1,7 @@
 // server.js
+require('dotenv').config();
+
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -450,6 +453,7 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
