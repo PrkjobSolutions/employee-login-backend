@@ -1,3 +1,4 @@
+// migrate.js
 const db = require('./db');
 
 async function migrate() {
@@ -39,6 +40,17 @@ async function migrate() {
         leave_type TEXT NOT NULL,
         color TEXT,
         created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // ⬇️ NEW: Employee Documents (one row per employee; stores both URLs)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS employee_documents (
+        id SERIAL PRIMARY KEY,
+        employee_id TEXT NOT NULL UNIQUE REFERENCES employees(employee_id) ON DELETE CASCADE,
+        offer_letter_url TEXT,
+        salary_slip_url TEXT,
+        updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
