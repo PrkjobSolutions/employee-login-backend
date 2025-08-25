@@ -1,6 +1,5 @@
-// server.js
 require('dotenv').config();
-
+// server.js
 
 const express = require('express');
 const cors = require('cors');
@@ -453,6 +452,7 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
