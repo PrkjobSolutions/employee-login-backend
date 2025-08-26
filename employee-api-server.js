@@ -11,7 +11,6 @@ const multer = require('multer');
 const cloudinary = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -47,9 +46,7 @@ app.use((req, res, next) => {
   next();
 });
 
-
 app.use(bodyParser.json());
-
 
 /* -------------------------
    Cloudinary File Upload
@@ -70,7 +67,6 @@ const storage = new CloudinaryStorage({
   }
 });
 
-
 const upload = multer({ storage });
 
 // Upload route
@@ -84,7 +80,6 @@ app.post('/api/documents/upload', upload.single('file'), (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 /**
  * Helper: run query and return rows
@@ -325,7 +320,6 @@ app.post('/leave-events', async (req, res) => {
   }
 });
 
-
 // Get all leave events for a specific employee
 app.get('/leave-events/:employee_id', async (req, res) => {
   const { employee_id } = req.params;
@@ -446,18 +440,7 @@ app.get('/api/documents/:empId', async (req, res) => {
   }
 });
 
-
-
 /* Start server */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
-
-
-
-
-
-
-
-
