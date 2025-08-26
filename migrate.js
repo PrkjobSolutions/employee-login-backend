@@ -3,7 +3,7 @@ const db = require('./db');
 
 async function migrate() {
   try {
-    // Employees table
+    // Employees table (already created earlier, kept for reference)
     await db.query(`
       CREATE TABLE IF NOT EXISTS employees (
         id SERIAL PRIMARY KEY,
@@ -43,7 +43,7 @@ async function migrate() {
       );
     `);
 
-    // ⬇️ NEW: Employee Documents (one row per employee; stores both URLs)
+    // ✅ Employee Documents table
     await db.query(`
       CREATE TABLE IF NOT EXISTS employee_documents (
         id SERIAL PRIMARY KEY,
@@ -58,7 +58,7 @@ async function migrate() {
     process.exit(0);
 
   } catch (err) {
-    console.error('Migration error:', err);
+    console.error('❌ Migration error:', err);
     process.exit(1);
   }
 }
