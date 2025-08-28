@@ -1,11 +1,11 @@
 require('dotenv').config();
 // server.js
 
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const db = require('./db');
-const path = require('path');
 
 const multer = require('multer');
 const cloudinary = require('cloudinary');
@@ -444,3 +444,4 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
