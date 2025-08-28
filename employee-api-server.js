@@ -8,8 +8,17 @@ const bodyParser = require('body-parser');
 const db = require('./db');
 
 const multer = require('multer');
-const cloudinary = require('cloudinary');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+const { google } = require('googleapis');
+const fs = require('fs');
+// Google Drive Auth
+const auth = new google.auth.GoogleAuth({
+  keyFile: 'credentials.json', // downloaded from Google Cloud
+  scopes: ['https://www.googleapis.com/auth/drive.file']
+});
+
+const driveService = google.drive({ version: 'v3', auth });
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -70,28 +79,48 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // Upload route
-app.post('/api/documents/upload', upload.single('file'), (req, res) => {
+const upload = multer({ dest: 'tmp/' }); // store temporarily before upload to Drive
+
+app.post('/api/documents/upload/:empId', upload.single('file'), async (req, res) => {
   try {
-    res.json({
-      success: true,
-      fileUrl: req.file.path // Cloudinary URL
+    const empId = req.params.empId;
+
+    const fileMetadata = {
+      name: req.file.originalname,
+      parents: [process.env.GDRIVE_FOLDER_ID] // Google Drive folder ID
+    };
+
+    const media = {
+      mimeType: req.file.mimetype,
+      body: fs.createReadStream(req.file.path)
+    };
+
+    const driveResponse = await driveService.files.create({
+      resource: fileMetadata,
+      media,
+      fields: 'id, webViewLink, webContentLink'
     });
+
+    // delete tmp file after upload
+    fs.unlinkSync(req.file.path);
+
+    // store in DB (employee_documents table)
+    const fileUrl = driveResponse.data.webViewLink;
+    await db.query(
+      `INSERT INTO employee_documents (employee_id, offer_letter_url)
+       VALUES ($1, $2)
+       ON CONFLICT (employee_id) DO UPDATE
+       SET offer_letter_url = EXCLUDED.offer_letter_url`,
+      [empId, fileUrl]
+    );
+
+    res.json({ success: true, fileUrl });
   } catch (err) {
+    console.error('Upload error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-/**
- * Helper: run query and return rows
- */
-async function runQuery(q, params = []) {
-  try {
-    const res = await db.query(q, params);
-    return res.rows;
-  } catch (err) {
-    throw err;
-  }
-}
 
 /* -------------------------
    Employees endpoints
@@ -444,4 +473,5 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
