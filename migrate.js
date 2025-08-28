@@ -3,7 +3,7 @@ const db = require('./db');
 
 async function migrate() {
   try {
-    // Employees table (already created earlier, kept for reference)
+    // Employees table
     await db.query(`
       CREATE TABLE IF NOT EXISTS employees (
         id SERIAL PRIMARY KEY,
@@ -31,6 +31,19 @@ async function migrate() {
       );
     `);
 
+    // ✅ Employee PDFs table (for storing uploaded PDF files)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS employee_pdfs (
+        id SERIAL PRIMARY KEY,
+        employee_id INT NOT NULL,
+        filename TEXT NOT NULL,
+        mime_type TEXT NOT NULL DEFAULT 'application/pdf',
+        file_size BIGINT NOT NULL,
+        file_data BYTEA NOT NULL,
+        uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
     // Leave Events table
     await db.query(`
       CREATE TABLE IF NOT EXISTS leave_events (
@@ -43,7 +56,7 @@ async function migrate() {
       );
     `);
 
-    // ✅ Employee Documents table
+    // Employee Documents table (URLs)
     await db.query(`
       CREATE TABLE IF NOT EXISTS employee_documents (
         id SERIAL PRIMARY KEY,
@@ -58,9 +71,4 @@ async function migrate() {
     process.exit(0);
 
   } catch (err) {
-    console.error('❌ Migration error:', err);
-    process.exit(1);
-  }
-}
-
-migrate();
+    console.error('❌ Migration error:', err
