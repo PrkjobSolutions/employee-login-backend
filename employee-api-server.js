@@ -57,24 +57,6 @@ app.use((req, res, next) => {
 
 app.use(bodyParser.json());
 
-/* -------------------------
-   Cloudinary File Upload
-   ------------------------- */
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
-});
-
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'employee_documents',
-    allowed_formats: ['jpg', 'png', 'pdf', 'doc', 'docx'],
-    resource_type: 'auto'   // 👈 important for mixed file types
-  }
-});
 
 // Upload route
 const upload = multer({ dest: 'tmp/' }); // store temporarily before upload to Drive
@@ -471,6 +453,7 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
