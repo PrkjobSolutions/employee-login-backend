@@ -1,16 +1,17 @@
 require('dotenv').config();
 // server.js
 
-
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const db = require('./db');
-
 const multer = require('multer');
-
 const { google } = require('googleapis');
 const fs = require('fs');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
 // Google Drive Auth
 const auth = new google.auth.GoogleAuth({
   keyFile: 'credentials.json', // downloaded from Google Cloud
@@ -18,10 +19,6 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const driveService = google.drive({ version: 'v3', auth });
-
-
-const app = express();
-const PORT = process.env.PORT || 3000;
 
 // CORS (allow your deployed frontend + local dev)
 const FRONTENDS = [
@@ -56,7 +53,6 @@ app.use((req, res, next) => {
 });
 
 app.use(bodyParser.json());
-
 
 // Upload route
 const upload = multer({ dest: 'tmp/' }); // store temporarily before upload to Drive
@@ -456,6 +452,7 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
