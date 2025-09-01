@@ -76,8 +76,6 @@ const storage = new CloudinaryStorage({
   }
 });
 
-const upload = multer({ storage });
-
 // Upload route
 const upload = multer({ dest: 'tmp/' }); // store temporarily before upload to Drive
 
@@ -473,5 +471,6 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
