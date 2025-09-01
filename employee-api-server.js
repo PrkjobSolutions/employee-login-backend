@@ -109,7 +109,7 @@ app.post('/api/documents/upload/:empId', upload.single('file'), async (req, res)
 // GET all employees
 app.get('/employees', async (req, res) => {
   try {
-    const rows = await runQuery('SELECT * FROM employees ORDER BY id');
+    const rows = await db.Query('SELECT * FROM employees ORDER BY id');
     res.json(rows);
   } catch (err) {
     console.error('GET /employees error:', err);
@@ -121,7 +121,7 @@ app.get('/employees', async (req, res) => {
 app.get('/employees/:id', async (req, res) => {
   const id = req.params.id;
   try {
-    const rows = await runQuery('SELECT * FROM employees WHERE id = $1', [id]);
+    const rows = await db.Query('SELECT * FROM employees WHERE id = $1', [id]);
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
   } catch (err) {
@@ -354,7 +354,7 @@ app.get('/leave-events/:employee_id', async (req, res) => {
 // Get all events
 app.get('/events', async (req, res) => {
   try {
-    const rows = await runQuery('SELECT * FROM events ORDER BY date');
+    const rows = await db.Query('SELECT * FROM events ORDER BY date');
     res.json(rows);
   } catch (err) {
     console.error('GET /events error:', err);
@@ -453,6 +453,7 @@ app.get('/api/documents/:empId', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
