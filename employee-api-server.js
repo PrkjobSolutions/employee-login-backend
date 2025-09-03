@@ -174,6 +174,34 @@ app.post("/admin-login", async (req, res) => {
   }
 });
 
+app.post("/login", async (req, res) => {
+  const { employee_id, password } = req.body;
+
+  try {
+    // Fetch employee from Supabase
+    const { data: employee, error } = await supabase
+      .from("employees")       // your table name
+      .select("*")
+      .eq("employee_id", employee_id)
+      .single();               // get only one row
+
+    if (error || !employee) {
+      return res.json({ success: false, message: "Employee not found" });
+    }
+
+    // Check password
+    if (employee.password !== password) {
+      return res.json({ success: false, message: "Incorrect password" });
+    }
+
+    // Success
+    return res.json({ success: true, employee });
+  } catch (err) {
+    console.error("Employee login error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 
 
 /* Start server */
