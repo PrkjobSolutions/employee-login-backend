@@ -150,21 +150,27 @@ app.post("/admin-login", async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const query = "SELECT id, username FROM admin WHERE username = $1 AND password = $2";
-    const values = [username, password];
-    const result = await db.query(query, values);
+    // Fetch admin from Supabase
+    const { data: admin, error } = await supabase
+      .from("admin")       // your table name
+      .select("*")
+      .eq("username", username)
+      .single();           // get a single row
 
-    if (result.rows.length > 0) {
-      res.json({
-        success: true,
-        admin: result.rows[0]
-      });
-    } else {
-      res.json({ success: false, message: "Invalid username or password" });
+    if (error || !admin) {
+      return res.json({ success: false, message: "Invalid username or password" });
     }
+
+    // Check password
+    if (admin.password !== password) {
+      return res.json({ success: false, message: "Invalid username or password" });
+    }
+
+    // Success
+    return res.json({ success: true, admin });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Admin login error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
