@@ -202,6 +202,43 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// GET employee by employee_id
+app.get("/api/employee/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data: employee, error } = await supabase
+      .from("employees")
+      .select("*")
+      .eq("employee_id", id)
+      .single();
+
+    if (error || !employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    res.json(employee);
+  } catch (err) {
+    console.error("GET /api/employee/:id error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET documents for employee
+app.get("/api/documents/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data: docs, error } = await supabase
+      .from("documents") // 👈 make sure you have this table
+      .select("*")
+      .eq("employee_id", id);
+
+    if (error) throw error;
+    res.json(docs);
+  } catch (err) {
+    console.error("GET /api/documents/:id error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 
 /* Start server */
