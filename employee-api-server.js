@@ -216,28 +216,29 @@ app.get("/api/documents/:id", async (req, res) => {
   }
 });
 
-// Get leave summary for an employee
+// ✅ Get leave summary for an employee (fixed)
 app.get("/api/leaves/summary/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const { data, error } = await supabase
       .from("leave_summary")
-      .select("employee_id, pl, cl, sl, el")
+      .select("pl, cl, sl, el")
       .eq("employee_id", id)
-      .maybeSingle();
+      .single(); // force one row
 
-    if (error) throw error;
-
-    if (!data) {
-      return res.json({ employee_id: id, pl: 0, cl: 0, sl: 0, el: 0 });
+    if (error && error.code === "PGRST116") {
+      // No row found → return defaults
+      return res.json({ pl: 0, cl: 0, sl: 0, el: 0 });
     }
+    if (error) throw error;
 
     res.json(data);
   } catch (err) {
-    console.error("Error fetching leave summary:", err.message);
+    console.error("GET /api/leaves/summary error:", err.message);
     res.status(500).json({ error: "Failed to fetch leave summary" });
   }
 });
+
 
 // Get leave events for an employee
 app.get("/api/leave-events/:id", async (req, res) => {
@@ -294,6 +295,26 @@ app.post("/api/leave-events", async (req, res) => {
   } catch (err) {
     console.error("POST /api/leave-events error:", err);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ✅ Update leave summary for an employee
+app.put("/api/leaves/summary/:id", async (req, res) => {
+  const { id } = req.params;
+  const { pl, cl, sl, el } = req.body;
+
+  try {
+    const { data, error } = await supabase
+      .from("leave_summary")
+      .upsert([{ employee_id: id, pl, cl, sl, el }], { onConflict: ["employee_id"] })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error("PUT /api/leaves/summary error:", err.message);
+    res.status(500).json({ error: "Failed to update leave summary" });
   }
 });
 
