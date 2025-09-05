@@ -247,17 +247,24 @@ app.get("/api/leaves/summary/:id", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("leave_summary")
-      .select("*")
+      .select("employee_id, pl, cl, sl, el")
       .eq("employee_id", id)
-      .single();
+      .maybeSingle();   // 👈 prevents crash if no row
 
     if (error) throw error;
-    res.json(data || {});
+
+    if (!data) {
+      // 👇 default values if row doesn’t exist
+      return res.json({ employee_id: id, pl: 0, cl: 0, sl: 0, el: 0 });
+    }
+
+    res.json(data);
   } catch (err) {
     console.error("Error fetching leave summary:", err.message);
     res.status(500).json({ error: "Failed to fetch leave summary" });
   }
 });
+
 
 
 // GET leave summary for employee
