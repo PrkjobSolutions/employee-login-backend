@@ -202,6 +202,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
+
 // GET employee by employee_id
 app.get("/api/employee/:id", async (req, res) => {
   const { id } = req.params;
@@ -240,10 +241,65 @@ app.get("/api/documents/:id", async (req, res) => {
   }
 });
 
+// ✅ Get leave summary for an employee
+app.get("/api/leaves/summary/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from("leave_summary")
+      .select("*")
+      .eq("employee_id", id)
+      .single();
+
+    if (error) throw error;
+    res.json(data || {});
+  } catch (err) {
+    console.error("Error fetching leave summary:", err.message);
+    res.status(500).json({ error: "Failed to fetch leave summary" });
+  }
+});
+
+
+// GET leave summary for employee
+
+/* -------------------------
+   Leave Events (Admin Calendar)
+   ------------------------- */
+
+
+// POST new leave event
+app.post("/api/leave-events", async (req, res) => {
+  const { employee_id, date, leave_type, color } = req.body;
+
+  try {
+    // 1. Insert into leave_events
+    const { data: event, error } = await supabase
+      .from("leave_events")
+      .insert([{ employee_id, date, leave_type, color }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // 2. Update leave summary counts
+    const col = leave_type.toLowerCase(); // e.g., "PL" → "pl"
+    if (["pl", "cl", "sl", "el"].includes(col)) {
+      // increment the right counter
+      await supabase.rpc("increment_leave_count", {
+        emp_id: employee_id,
+        leave_col: col
+      });
+    }
+
+    res.status(201).json(event);
+  } catch (err) {
+    console.error("POST /api/leave-events error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 /* Start server */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
-
