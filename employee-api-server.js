@@ -162,9 +162,10 @@ app.post("/login", async (req, res) => {
       return res.json({ success: false, message: "Employee not found" });
     }
 
-    if (employee.password !== password) {
+    if ((employee.password || "").trim() !== (password || "").trim()) {
       return res.json({ success: false, message: "Incorrect password" });
     }
+
 
     return res.json({ success: true, employee });
   } catch (err) {
