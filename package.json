@@ -8,6 +8,11 @@
   },
   "author": "",
   "license": "ISC",
+
+  "engines": {
+    "node": "18.x"
+  },
+
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
     "body-parser": "^2.2.0",
@@ -22,4 +27,3 @@
     "sqlite3": "^5.1.7"
   }
 }
-
