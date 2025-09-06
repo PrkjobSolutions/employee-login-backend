@@ -268,6 +268,81 @@ app.get("/api/leave-events/:id", async (req, res) => {
 
 
 /* -------------------------
+   Events API
+   ------------------------- */
+
+// Get all events
+app.get("/api/events", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .order("date", { ascending: true });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error("GET /api/events error:", err.message);
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
+// Add new event
+app.post("/api/events", async (req, res) => {
+  const { title, date, description, event_type } = req.body;  // ✅ include event_type
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .insert([{ title, date, description, event_type }])  // ✅ insert event_type too
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err) {
+    console.error("POST /api/events error:", err.message);
+    res.status(500).json({ error: "Failed to add event" });
+  }
+});
+
+
+app.delete("/api/events/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { error } = await supabase.from("events").delete().eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /api/events/:id error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to delete event" });
+  }
+});
+
+
+
+app.put("/admin/password", async (req, res) => {
+  const { newPassword } = req.body;
+  try {
+    // Assuming single admin for now
+    const { data, error } = await supabase
+      .from("admin")
+      .update({ password: newPassword })
+      .eq("username", "admin")
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error("PUT /admin/password error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to update password" });
+  }
+});
+
+
+
+
+/* -------------------------
    Leave Events (Admin Calendar)
    ------------------------- */
 
