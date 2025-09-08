@@ -56,7 +56,7 @@ const upload = multer({ dest: 'tmp/' }); // store temporarily before upload to D
    ------------------------- */
 
 // GET all employees
-app.get('/employees', async (req, res) => {
+app.get('/api/employees', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('employees')
@@ -66,13 +66,13 @@ app.get('/employees', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (err) {
-    console.error('GET /employees error:', err.message);
+    console.error('GET /api/employees error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Create new employee
-app.post('/employees', async (req, res) => {
+app.post('/api/employees', async (req, res) => {
   try {
     const {
       employee_id,
@@ -105,7 +105,7 @@ app.post('/employees', async (req, res) => {
     if (error) throw error;
     res.status(201).json(data);
   } catch (err) {
-    console.error('POST /employees error:', err.message);
+    console.error('POST /api/employees error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
