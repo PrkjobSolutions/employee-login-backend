@@ -449,41 +449,45 @@ app.get("/leave-summary/:employee_id", async (req, res) => {
 });
 
 
-// Save pending docs
-app.post("/pending-docs", async (req, res) => {
-  const { employee_id, notes } = req.body;
-
+// GET pending docs for an employee
+app.get("/api/pending-docs/:employee_id", async (req, res) => {
+  const { employee_id } = req.params;
   try {
     const { data, error } = await supabase
       .from("pending_documents")
-      .upsert([{ employee_id, notes }], { onConflict: "employee_id" });
+      .select("*")
+      .eq("employee_id", employee_id)
+      .single();
+
+    if (error && error.code === "PGRST116") { // no row found
+      return res.json({ notes: "" });
+    }
+    if (error) throw error;
+
+    res.json({ notes: data.notes });
+  } catch (err) {
+    console.error("GET /api/pending-docs error:", err.message);
+    res.status(500).json({ error: "Failed to fetch pending docs" });
+  }
+});
+
+// POST save/update pending docs
+app.post("/api/pending-docs", async (req, res) => {
+  const { employee_id, notes } = req.body;
+  try {
+    const { error } = await supabase
+      .from("pending_documents")
+      .upsert([{ employee_id, notes }], { onConflict: ["employee_id"] });
 
     if (error) throw error;
-    res.status(200).json({ success: true, data });
+
+    res.status(200).json({ message: "Pending docs saved" });
   } catch (err) {
-    console.error("POST /pending-docs error:", err.message);
+    console.error("POST /api/pending-docs error:", err.message);
     res.status(500).json({ error: "Failed to save pending docs" });
   }
 });
 
-// Get pending docs for employee
-app.get("/pending-docs/:employee_id", async (req, res) => {
-  const { employee_id } = req.params;
-
-  try {
-    const { data, error } = await supabase
-      .from("pending_documents")
-      .select("notes")
-      .eq("employee_id", employee_id)
-      .single();
-
-    if (error) throw error;
-    res.status(200).json(data);
-  } catch (err) {
-    console.error("GET /pending-docs error:", err.message);
-    res.status(500).json({ error: "Failed to fetch pending docs" });
-  }
-});
 
 
 
