@@ -400,6 +400,52 @@ app.put("/api/leaves/summary/:id", async (req, res) => {
   }
 });
 
+// Save or update leave summary for an employee
+app.post("/leave-summary", async (req, res) => {
+  const { employee_id, pl, cl, sl, el } = req.body;
+
+  try {
+    // Upsert = insert new if not exists, update if exists
+    const { error } = await supabase
+      .from("leave_summary")
+      .upsert([
+        {
+          employee_id,
+          pl,
+          cl,
+          sl,
+          el,
+          updated_at: new Date()
+        }
+      ]);
+
+    if (error) throw error;
+
+    res.status(200).json({ message: "Leave summary saved successfully" });
+  } catch (err) {
+    console.error("Error saving leave summary:", err.message);
+    res.status(500).json({ error: "Failed to save leave summary" });
+  }
+});
+
+// Get leave summary for an employee
+app.get("/leave-summary/:employee_id", async (req, res) => {
+  const { employee_id } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from("leave_summary")
+      .select("*")
+      .eq("employee_id", employee_id)
+      .single();
+
+    if (error) throw error;
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("E
+
+
 
 /* Start server */
 app.listen(PORT, () => {
