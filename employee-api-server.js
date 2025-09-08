@@ -322,12 +322,17 @@ app.delete("/api/events/:id", async (req, res) => {
 
 app.put("/admin/password", async (req, res) => {
   const { newPassword } = req.body;
+
+  if (!newPassword) {
+    return res.status(400).json({ success: false, message: "Password is required" });
+  }
+
   try {
-    // Assuming single admin for now
+    // Assuming single admin with id = 1
     const { data, error } = await supabase
       .from("admin")
       .update({ password: newPassword })
-      .eq("username", "admin")
+      .eq("id", 1)
       .select()
       .single();
 
@@ -338,6 +343,7 @@ app.put("/admin/password", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update password" });
   }
 });
+
 
 
 
