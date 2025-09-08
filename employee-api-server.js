@@ -320,29 +320,29 @@ app.delete("/api/events/:id", async (req, res) => {
 
 
 
+// Update admin password
 app.put("/admin/password", async (req, res) => {
   const { newPassword } = req.body;
 
   if (!newPassword) {
-    return res.status(400).json({ success: false, message: "Password is required" });
+    return res.status(400).json({ success: false, error: "Password is required" });
   }
 
   try {
-    // Assuming single admin with id = 1
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("admin")
       .update({ password: newPassword })
-      .eq("id", 1)
-      .select()
-      .single();
+      .eq("username", "aayushi");  // ✅ use username instead of id
 
     if (error) throw error;
+
     res.json({ success: true });
   } catch (err) {
-    console.error("PUT /admin/password error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to update password" });
+    console.error("Error updating admin password:", err.message);
+    res.status(500).json({ success: false, error: "Failed to update password" });
   }
 });
+
 
 
 
