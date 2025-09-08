@@ -443,7 +443,10 @@ app.get("/leave-summary/:employee_id", async (req, res) => {
 
     res.status(200).json(data);
   } catch (err) {
-    console.error("E
+    console.error("GET /leave-summary/:employee_id error:", err.message);
+    res.status(500).json({ error: "Failed to fetch leave summary" });
+  }
+});
 
 
 
