@@ -472,29 +472,34 @@ app.get("/api/pending-docs/:employee_id", async (req, res) => {
 });
 
 // POST save/update pending docs
+// POST save/update pending docs
 app.post("/api/pending-docs", async (req, res) => {
   const { employee_id, notes } = req.body;
+
+  if (!employee_id) {
+    return res.status(400).json({ error: "Employee ID is required" });
+  }
+
   try {
+    // Upsert = insert if not exists, update if exists
     const { data, error } = await supabase
       .from("pending_documents")
-      .upsert([{ employee_id, notes, updated_at: new Date() }], {
-        onConflict: ["employee_id"],
-      });
+      .upsert(
+        [{ employee_id, notes }], // ✅ no updated_at
+        { onConflict: ["employee_id"] }
+      );
 
     if (error) {
       console.error("Supabase error:", error.message);
-      throw error;
+      return res.status(500).json({ error: "Failed to save pending docs" });
     }
 
-    res.status(200).json({ message: "Pending docs saved", data });
+    res.status(200).json({ message: "Pending docs saved successfully", data });
   } catch (err) {
     console.error("POST /api/pending-docs error:", err.message);
     res.status(500).json({ error: "Failed to save pending docs" });
   }
 });
-
-
-
 
 /* Start server */
 app.listen(PORT, () => {
