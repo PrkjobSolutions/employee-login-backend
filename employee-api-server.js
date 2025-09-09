@@ -489,10 +489,11 @@ app.post("/api/pending-docs", async (req, res) => {
         { onConflict: ["employee_id"] }
       );
 
-    if (error) {
-      console.error("Supabase error:", error.message);
-      return res.status(500).json({ error: "Failed to save pending docs" });
+      if (error) {
+      console.error("Supabase error:", error);
+      return res.status(500).json({ error: error.message, details: error.details, hint: error.hint });
     }
+
 
     res.status(200).json({ message: "Pending docs saved successfully", data });
   } catch (err) {
