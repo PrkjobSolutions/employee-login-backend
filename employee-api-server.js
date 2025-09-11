@@ -23,16 +23,14 @@ const FRONTENDS = [
 ];
 
 const corsOptions = {
-  origin: function (origin, cb) {
-    if (!origin) return cb(null, true); // allow non-browser clients
-    if (FRONTENDS.includes(origin)) return cb(null, true);
-    return cb(null, false);
-  },
+  origin: FRONTENDS, // allow only your frontend + localhost
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false,
-  maxAge: 86400
+  credentials: true
 };
+
+app.use(cors(corsOptions));
+
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
