@@ -472,6 +472,7 @@ app.get("/api/pending-docs/:employee_id", async (req, res) => {
 });
 
 // POST save pending docs (no upsert, just insert)
+// POST save pending docs (insert or update if already exists)
 app.post("/api/pending-docs", async (req, res) => {
   const { employee_id, notes } = req.body;
 
@@ -482,7 +483,9 @@ app.post("/api/pending-docs", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("pending_documents")
-      .insert([{ employee_id, notes }]);
+      .upsert([{ employee_id, notes }], { onConflict: ["employee_id"] }) // 👈 key change
+      .select()
+      .single();
 
     if (error) {
       console.error("Supabase error:", error);
@@ -495,6 +498,7 @@ app.post("/api/pending-docs", async (req, res) => {
     res.status(500).json({ error: "Failed to save pending docs" });
   }
 });
+
 
 
 /* Start server */
