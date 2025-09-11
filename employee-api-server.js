@@ -46,7 +46,9 @@ app.use((req, res, next) => {
 app.use(bodyParser.json());
 
 // Upload route
-const upload = multer({ dest: 'tmp/' }); // store temporarily before upload to Drive
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
 
 
 /* -------------------------
@@ -494,6 +496,51 @@ app.post("/api/pending-docs", async (req, res) => {
   } catch (err) {
     console.error("POST /api/pending-docs error:", err.message);
     res.status(500).json({ error: "Failed to save pending docs" });
+  }
+});
+
+// Upload employee document
+app.post("/api/upload-document", upload.single("file"), async (req, res) => {
+  const { employee_id, doc_type } = req.body;
+
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  try {
+    // 1. Upload file to Supabase Storage
+    const fileExt = req.file.originalname.split(".").pop();
+    const fileName = `${employee_id}_${Date.now()}.${fileExt}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("employee-docs") // bucket name
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: true
+      });
+
+    if (uploadError) throw uploadError;
+
+    // 2. Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from("employee-docs")
+      .getPublicUrl(fileName);
+
+    // 3. Save record in documents table
+    const { data, error } = await supabase
+      .from("documents")
+      .insert([
+        { employee_id, doc_type, file_url: publicUrlData.publicUrl }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, document: data });
+  } catch (err) {
+    console.error("Upload document error:", err.message);
+    res.status(500).json({ error: "Failed to upload document" });
   }
 });
 
