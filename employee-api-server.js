@@ -472,32 +472,49 @@ app.get("/api/pending-docs/:employee_id", async (req, res) => {
 });
 
 // POST save pending docs (no upsert, just insert)
-// POST save pending docs (insert or update if already exists)
-app.post("/api/pending-docs", async (req, res) => {
-  const { employee_id, notes } = req.body;
+// Upload employee document (Offer Letter, Salary Slip, etc.)
+app.post("/api/upload-document", upload.single("file"), async (req, res) => {
+  const { employee_id, doc_type } = req.body;
 
-  if (!employee_id) {
-    return res.status(400).json({ error: "Employee ID is required" });
+  if (!employee_id || !req.file) {
+    return res.status(400).json({ error: "Employee ID and file are required" });
   }
 
   try {
-    const { data, error } = await supabase
-      .from("pending_documents")
-      .upsert([{ employee_id, notes }], { onConflict: ["employee_id"] }) // 👈 key change
-      .select()
-      .single();
+    // File name: employeeId_docType_timestamp.pdf
+    const fileName = `${employee_id}_${doc_type}_${Date.now()}.pdf`;
 
-    if (error) {
-      console.error("Supabase error:", error);
-      return res.status(500).json({ error: error.message });
-    }
+    // Upload to Supabase Storage bucket "employee-docs"
+    const { data, error } = await supabase.storage
+      .from("employee-docs")
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false,
+      });
 
-    res.status(201).json({ message: "Pending docs saved", data });
+    if (error) throw error;
+
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from("employee-docs")
+      .getPublicUrl(fileName);
+
+    const fileUrl = publicUrlData.publicUrl;
+
+    // Save into documents table
+    const { data: docData, error: dbError } = await supabase
+      .from("documents")
+      .insert([{ employee_id, doc_type, file_url: fileUrl }]);
+
+    if (dbError) throw dbError;
+
+    res.status(201).json({ message: "Document uploaded successfully", fileUrl });
   } catch (err) {
-    console.error("POST /api/pending-docs error:", err.message);
-    res.status(500).json({ error: "Failed to save pending docs" });
+    console.error("Upload document error:", err.message);
+    res.status(500).json({ error: "Failed to upload document" });
   }
 });
+
 
 // Upload employee document
 app.post("/api/upload-document", upload.single("file"), async (req, res) => {
