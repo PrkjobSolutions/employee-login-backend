@@ -472,49 +472,6 @@ app.get("/api/pending-docs/:employee_id", async (req, res) => {
 });
 
 // POST save pending docs (no upsert, just insert)
-// Upload employee document (Offer Letter, Salary Slip, etc.)
-app.post("/api/upload-document", upload.single("file"), async (req, res) => {
-  const { employee_id, doc_type } = req.body;
-
-  if (!employee_id || !req.file) {
-    return res.status(400).json({ error: "Employee ID and file are required" });
-  }
-
-  try {
-    // File name: employeeId_docType_timestamp.pdf
-    const fileName = `${employee_id}_${doc_type}_${Date.now()}.pdf`;
-
-    // Upload to Supabase Storage bucket "employee-docs"
-    const { data, error } = await supabase.storage
-      .from("employee-docs")
-      .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: false,
-      });
-
-    if (error) throw error;
-
-    // Get public URL
-    const { data: publicUrlData } = supabase.storage
-      .from("employee-docs")
-      .getPublicUrl(fileName);
-
-    const fileUrl = publicUrlData.publicUrl;
-
-    // Save into documents table
-    const { data: docData, error: dbError } = await supabase
-      .from("documents")
-      .insert([{ employee_id, doc_type, file_url: fileUrl }]);
-
-    if (dbError) throw dbError;
-
-    res.status(201).json({ message: "Document uploaded successfully", fileUrl });
-  } catch (err) {
-    console.error("Upload document error:", err.message);
-    res.status(500).json({ error: "Failed to upload document" });
-  }
-});
-
 
 // Upload employee document
 app.post("/api/upload-document", upload.single("file"), async (req, res) => {
@@ -560,6 +517,9 @@ app.post("/api/upload-document", upload.single("file"), async (req, res) => {
     res.status(500).json({ error: "Failed to upload document" });
   }
 });
+employee_id: EMP@2002
+doc_type: OfferLetter
+file_url: https://mkcxtqpszsboxionxzpn.supabase.co/storage/v1/object/public/employee-docs/EMP@2002_1757740479922.pdf
 
 
 
@@ -567,3 +527,4 @@ app.post("/api/upload-document", upload.single("file"), async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
