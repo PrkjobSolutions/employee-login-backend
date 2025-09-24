@@ -532,7 +532,7 @@ app.post("/api/upload-document", upload.single("file"), async (req, res) => {
     res.status(500).json({ error: "Failed to upload document" });
   }
 });
-employee_id: EMP@2002
+employee_id: "EMP@2002"
 doc_type: OfferLetter
 file_url: https://mkcxtqpszsboxionxzpn.supabase.co/storage/v1/object/public/employee-docs/EMP@2002_1757740479922.pdf
 
@@ -542,5 +542,6 @@ file_url: https://mkcxtqpszsboxionxzpn.supabase.co/storage/v1/object/public/empl
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
