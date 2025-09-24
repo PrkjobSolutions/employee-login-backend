@@ -200,22 +200,37 @@ app.get("/api/employee/:id", async (req, res) => {
   }
 });
 
-// GET documents for employee
-app.get("/api/documents/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { data: docs, error } = await supabase
-      .from("documents")
-      .select("*")
-      .eq("employee_id", id);
+app.get("/api/documents/:employeeId", async (req, res) => {
+  const { employeeId } = req.params;
 
-    if (error) throw error;
-    res.json(docs);
-  } catch (err) {
-    console.error("GET /api/documents/:id error:", err);
-    res.status(500).json({ error: "Server error" });
+  // Fetch documents for this employee
+  const { data, error } = await supabase
+    .from("documents")
+    .select("id, employee_id, doc_type, file_path, file_url, uploaded_at")
+    .eq("employee_id", employeeId);
+
+  if (error) {
+    console.error("Error fetching documents:", error.message);
+    return res.status(500).json({ error: error.message });
   }
+
+  // Generate public URLs if missing
+  const docsWithUrls = await Promise.all(
+    (data || []).map(async (doc) => {
+      let url = doc.file_url;
+      if (!url && doc.file_path) {
+        const { data: publicUrlData } = supabase.storage
+          .from("employee-docs")
+          .getPublicUrl(doc.file_path);
+        url = publicUrlData?.publicUrl || null;
+      }
+      return { ...doc, file_url: url };
+    })
+  );
+
+  res.json(docsWithUrls);
 });
+
 
 // ✅ Get leave summary for an employee (fixed)
 app.get("/api/leaves/summary/:id", async (req, res) => {
@@ -527,4 +542,5 @@ file_url: https://mkcxtqpszsboxionxzpn.supabase.co/storage/v1/object/public/empl
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
